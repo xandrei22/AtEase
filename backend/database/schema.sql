@@ -98,6 +98,22 @@ CREATE INDEX idx_payments_booking_id ON payments(booking_id);
 CREATE INDEX idx_payments_status ON payments(payment_status);
 
 -- =============================================================================
+-- BOOKING REQUESTS (customer-initiated requests for admin approval)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS booking_requests (
+  id SERIAL PRIMARY KEY,
+  booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  request_type VARCHAR(20) NOT NULL,
+  payload JSONB,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  requested_by INTEGER NOT NULL REFERENCES users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_booking_requests_booking_id ON booking_requests(booking_id);
+CREATE INDEX idx_booking_requests_status ON booking_requests(status);
+
+-- =============================================================================
 -- OPTIONAL: Trigger to update rooms.updated_at
 -- =============================================================================
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -113,3 +129,20 @@ CREATE TRIGGER rooms_updated_at
   BEFORE UPDATE ON rooms
   FOR EACH ROW
   EXECUTE PROCEDURE set_updated_at();
+
+-- =============================================================================
+-- REVIEWS
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS reviews (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  booking_id INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_reviews_room_id ON reviews(room_id);
+CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX idx_reviews_booking_id ON reviews(booking_id);
