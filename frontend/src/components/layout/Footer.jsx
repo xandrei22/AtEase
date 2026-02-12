@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4 border-t border-border pt-6 text-center text-sm text-muted-foreground">
           <span>© {new Date().getFullYear()} AtEase. All rights reserved.</span>
-          <Link to="/admin/login" className="hover:text-primary hover:underline">Staff? Admin sign in</Link>
+          <Link to="/admin/login" className="hover:text-primary hover:underline">Admin? Sign in here</Link>
         </div>
       </div>
     </footer>

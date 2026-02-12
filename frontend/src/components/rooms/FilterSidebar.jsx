@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ROOM_TYPES, AMENITY_OPTIONS } from '../../data/mockRooms';
 
 export default function FilterSidebar({ filters, onFiltersChange }) {
@@ -8,17 +8,50 @@ export default function FilterSidebar({ filters, onFiltersChange }) {
   const [amenities, setAmenities] = useState(filters.amenities ?? []);
   const [minRating, setMinRating] = useState(filters.minRating ?? 0);
   const [guestsInput, setGuestsInput] = useState(filters.guests == null ? '' : String(filters.guests));
+  const [roomTypeOthers, setRoomTypeOthers] = useState(filters.roomTypeOthers ?? false);
+  const [amenitiesOthers, setAmenitiesOthers] = useState(filters.amenitiesOthers ?? false);
+
+  useEffect(() => {
+    setRoomTypeOthers(filters.roomTypeOthers ?? false);
+    setAmenitiesOthers(filters.amenitiesOthers ?? false);
+    setRoomTypes(filters.roomTypes ?? []);
+    setAmenities(filters.amenities ?? []);
+  }, [filters.roomTypeOthers, filters.amenitiesOthers, filters.roomTypes, filters.amenities]);
 
   const toggleRoomType = (type) => {
     const next = roomTypes.includes(type) ? roomTypes.filter((t) => t !== type) : [...roomTypes, type];
     setRoomTypes(next);
-    onFiltersChange({ ...filters, roomTypes: next });
+    onFiltersChange({ ...filters, roomTypes: next, roomTypeOthers: false });
+    if (next.length > 0) setRoomTypeOthers(false);
+  };
+
+  const toggleRoomTypeOthers = () => {
+    const newValue = !roomTypeOthers;
+    setRoomTypeOthers(newValue);
+    if (newValue) {
+      setRoomTypes([]);
+      onFiltersChange({ ...filters, roomTypes: [], roomTypeOthers: true });
+    } else {
+      onFiltersChange({ ...filters, roomTypeOthers: false });
+    }
   };
 
   const toggleAmenity = (a) => {
     const next = amenities.includes(a) ? amenities.filter((x) => x !== a) : [...amenities, a];
     setAmenities(next);
-    onFiltersChange({ ...filters, amenities: next });
+    onFiltersChange({ ...filters, amenities: next, amenitiesOthers: false });
+    if (next.length > 0) setAmenitiesOthers(false);
+  };
+
+  const toggleAmenitiesOthers = () => {
+    const newValue = !amenitiesOthers;
+    setAmenitiesOthers(newValue);
+    if (newValue) {
+      setAmenities([]);
+      onFiltersChange({ ...filters, amenities: [], amenitiesOthers: true });
+    } else {
+      onFiltersChange({ ...filters, amenitiesOthers: false });
+    }
   };
 
   const applyPrice = () => {
@@ -88,33 +121,59 @@ export default function FilterSidebar({ filters, onFiltersChange }) {
         <div>
           <p className="mb-2 text-sm font-medium text-foreground">Room type</p>
           <div className="space-y-1">
-            {ROOM_TYPES.map((type) => (
-              <label key={type} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={roomTypes.includes(type)}
-                  onChange={() => toggleRoomType(type)}
-                  className="rounded border-border"
-                />
-                <span className="text-sm">{type}</span>
-              </label>
-            ))}
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={roomTypeOthers}
+                onChange={toggleRoomTypeOthers}
+                className="rounded border-border"
+              />
+              <span className="text-sm font-medium">Others</span>
+            </label>
+            {!roomTypeOthers && (
+              <>
+                {ROOM_TYPES.map((type) => (
+                  <label key={type} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={roomTypes.includes(type)}
+                      onChange={() => toggleRoomType(type)}
+                      className="rounded border-border"
+                    />
+                    <span className="text-sm">{type}</span>
+                  </label>
+                ))}
+              </>
+            )}
           </div>
         </div>
         <div>
           <p className="mb-2 text-sm font-medium text-foreground">Amenities</p>
           <div className="space-y-1">
-            {AMENITY_OPTIONS.slice(0, 6).map((a) => (
-              <label key={a} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={amenities.includes(a)}
-                  onChange={() => toggleAmenity(a)}
-                  className="rounded border-border"
-                />
-                <span className="text-sm">{a}</span>
-              </label>
-            ))}
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={amenitiesOthers}
+                onChange={toggleAmenitiesOthers}
+                className="rounded border-border"
+              />
+              <span className="text-sm font-medium">Others</span>
+            </label>
+            {!amenitiesOthers && (
+              <>
+                {AMENITY_OPTIONS.slice(0, 6).map((a) => (
+                  <label key={a} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={amenities.includes(a)}
+                      onChange={() => toggleAmenity(a)}
+                      className="rounded border-border"
+                    />
+                    <span className="text-sm">{a}</span>
+                  </label>
+                ))}
+              </>
+            )}
           </div>
         </div>
         <div>

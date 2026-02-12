@@ -18,9 +18,17 @@ export default function RoomDetailsPage() {
 
   const room = getRoomById(id);
   const state = location.state || {};
-  const checkIn = state.checkIn || searchParams.checkIn || '';
-  const checkOut = state.checkOut || searchParams.checkOut || '';
-  const guests = state.guests ?? searchParams.guests ?? 1;
+  const initialCheckIn = state.checkIn || searchParams.checkIn || '';
+  const initialCheckOut = state.checkOut || searchParams.checkOut || '';
+  const initialGuests = state.guests ?? searchParams.guests ?? 1;
+  
+  const [editCheckIn, setEditCheckIn] = useState(initialCheckIn);
+  const [editCheckOut, setEditCheckOut] = useState(initialCheckOut);
+  const [editGuests, setEditGuests] = useState(String(initialGuests));
+
+  const checkIn = editCheckIn;
+  const checkOut = editCheckOut;
+  const editableGuests = Number(editGuests) || 1;
   const nights = getNights(checkIn, checkOut);
   const subtotal = room ? room.pricePerNight * nights : 0;
   const tax = Math.round(subtotal * 0.12);
@@ -43,13 +51,22 @@ export default function RoomDetailsPage() {
   }
 
   const handleProceedToCheckout = () => {
+    if (!editCheckIn || !editCheckOut) {
+      alert('Please select your check-in and check-out dates.');
+      return;
+    }
     setSelectedRoom(room);
-    setCheckoutDates({ checkIn, checkOut, guests });
+    setCheckoutDates({ checkIn: editCheckIn, checkOut: editCheckOut, guests: editableGuests });
     navigate('/checkout');
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      {location.state?.missingDates && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Please set your check-in and check-out dates using the search on the <button type="button" onClick={() => navigate('/rooms')} className="font-medium underline hover:no-underline">Rooms</button> or <button type="button" onClick={() => navigate('/')} className="font-medium underline hover:no-underline">Home</button> page, then open this room again and click Book.
+        </div>
+      )}
       <div className="mb-4 flex items-center gap-2">
         <button
           type="button"
@@ -140,11 +157,39 @@ export default function RoomDetailsPage() {
         <div className="lg:col-span-1">
           <div className="sticky top-24 rounded-xl border border-border bg-background p-6 shadow-lg">
             <p className="text-2xl font-bold text-foreground">₱{room.pricePerNight} <span className="text-base font-normal text-muted-foreground">/ night</span></p>
-            {checkIn && checkOut && (
+            {editCheckIn && editCheckOut && (
               <>
-                <p className="mt-2 text-sm text-muted-foreground">Check-in: {checkIn}</p>
-                <p className="text-sm text-muted-foreground">Check-out: {checkOut}</p>
-                <p className="text-sm text-muted-foreground">{nights} night{nights !== 1 ? 's' : ''} • {guests} guest{guests !== 1 ? 's' : ''}</p>
+                <div className="mt-4 space-y-3 border-t border-border pt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Check-in</label>
+                    <input
+                      type="date"
+                      value={editCheckIn}
+                      onChange={(e) => setEditCheckIn(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Check-out</label>
+                    <input
+                      type="date"
+                      value={editCheckOut}
+                      onChange={(e) => setEditCheckOut(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Guests</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={editGuests}
+                      onChange={(e) => setEditGuests(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">{nights} night{nights !== 1 ? 's' : ''} • {editableGuests} guest{editableGuests !== 1 ? 's' : ''}</p>
                 <div className="mt-4 space-y-1 border-t border-border pt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal (₱{room.pricePerNight} × {nights})</span>
@@ -161,10 +206,20 @@ export default function RoomDetailsPage() {
                 </div>
               </>
             )}
+            {(!editCheckIn || !editCheckOut) && (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Please select check-in and check-out dates using the search on the <button type="button" onClick={() => navigate('/rooms')} className="font-medium underline hover:no-underline">Rooms</button> or <button type="button" onClick={() => navigate('/')} className="font-medium underline hover:no-underline">Home</button> page.
+              </div>
+            )}
             <button
               type="button"
               onClick={handleProceedToCheckout}
-              className="mt-6 w-full rounded-lg bg-primary py-3 font-semibold text-white hover:bg-primary/90"
+              disabled={!editCheckIn || !editCheckOut}
+              className={`mt-6 w-full rounded-lg py-3 font-semibold text-white ${
+                !editCheckIn || !editCheckOut
+                  ? 'cursor-not-allowed bg-gray-400'
+                  : 'bg-primary hover:bg-primary/90'
+              }`}
             >
               Proceed to Checkout
             </button>

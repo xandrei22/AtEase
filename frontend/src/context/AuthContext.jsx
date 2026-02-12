@@ -39,6 +39,11 @@ export function AuthProvider({ children }) {
         return { success: false, error: 'Invalid email or password.' };
       }
       setAuth({ token: data.token, user: data.user });
+      try {
+        // sync profile shown in Booking pages with authenticated user
+        const profile = { name: data.user.name || '', email: data.user.email || '', phone: data.user.phone || '' };
+        localStorage.setItem('atease_user_profile', JSON.stringify(profile));
+      } catch (_) {}
       return { success: true };
     } catch (err) {
       const message = err?.data?.error || err?.message || 'Login failed.';
@@ -46,7 +51,25 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const signup = useCallback(async ({ firstName, lastName, email, password, age, address, gender }) => {
+  const loginWithGoogle = useCallback(async (credential) => {
+    try {
+      const data = await authApi.loginWithGoogle(credential);
+      if (!data?.user || (data.user?.role || '').toUpperCase() !== 'CUSTOMER') {
+        return { success: false, error: 'Google sign-in is only for customer accounts.' };
+      }
+      setAuth({ token: data.token, user: data.user });
+      try {
+        const profile = { name: data.user.name || '', email: data.user.email || '', phone: data.user.phone || '' };
+        localStorage.setItem('atease_user_profile', JSON.stringify(profile));
+      } catch (_) {}
+      return { success: true };
+    } catch (err) {
+      const message = err?.data?.error || err?.message || 'Google sign-in failed.';
+      return { success: false, error: message };
+    }
+  }, []);
+
+  const signup = useCallback(async ({ firstName, lastName, email, password, age, phone, address, gender }) => {
     const name = [firstName, lastName].filter(Boolean).map((s) => (s || '').trim()).join(' ') || email;
     if (!name.trim()) return { success: false, error: 'Name is required.' };
     if (!(email || '').trim()) return { success: false, error: 'Email is required.' };
@@ -55,6 +78,10 @@ export function AuthProvider({ children }) {
     try {
       const data = await authApi.register(name, email, password);
       setAuth({ token: data.token, user: data.user });
+      try {
+        const profile = { name: data.user.name || '', email: data.user.email || '', phone: data.user.phone || '' };
+        localStorage.setItem('atease_user_profile', JSON.stringify(profile));
+      } catch (_) {}
       return { success: true };
     } catch (err) {
       const message = err?.data?.error || err?.message || 'Sign up failed.';
@@ -64,6 +91,11 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     setAuth(null);
+    try { localStorage.removeItem('atease_user_profile'); } catch (_) {}
+  }, []);
+
+  const setUser = useCallback((updatedUser) => {
+    setAuth((prev) => prev ? { ...prev, user: { ...prev.user, ...updatedUser } } : null);
   }, []);
 
   const value = {
@@ -73,8 +105,10 @@ export function AuthProvider({ children }) {
     isCustomer: user?.role === 'customer',
     isAdmin: user?.role === 'admin',
     login,
+    loginWithGoogle,
     signup,
     logout,
+    setUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -12,12 +12,30 @@ export function mapRoomFromApi(r) {
     location: '',
     address: '',
     pricePerNight: r.price_per_night,
-    rating: null,
-    reviewCount: 0,
+    rating: r.avg_rating != null ? Number(r.avg_rating) : (r.avgRating != null ? Number(r.avgRating) : null),
+    reviewCount: Number(r.review_count ?? r.reviewCount ?? 0),
     capacity: r.capacity,
-    amenities: Array.isArray(r.amenities) ? r.amenities : [],
+    amenities: (() => {
+      if (Array.isArray(r.amenities)) return r.amenities;
+      if (typeof r.amenities === 'string') {
+        try {
+          const p = JSON.parse(r.amenities);
+          return Array.isArray(p) ? p : [];
+        } catch { return []; }
+      }
+      return [];
+    })(),
     image: r.image || '',
-    images: Array.isArray(r.images) ? r.images : r.image ? [r.image] : [],
+    images: (() => {
+      if (Array.isArray(r.images)) return r.images;
+      if (typeof r.images === 'string') {
+        try {
+          const p = JSON.parse(r.images);
+          return Array.isArray(p) ? p : r.image ? [r.image] : [];
+        } catch { return r.image ? [r.image] : []; }
+      }
+      return r.image ? [r.image] : [];
+    })(),
     description: r.description || '',
     highlights: Array.isArray(r.highlights) ? r.highlights : [],
     cancellationPolicy: r.cancellation_policy || '',
@@ -28,8 +46,12 @@ export function mapRoomFromApi(r) {
   };
 }
 
-export async function fetchRooms(availableOnly = false) {
-  const query = availableOnly ? '?available=true' : '';
+export async function fetchRooms(availableOnly = false, checkIn = null, checkOut = null) {
+  const params = new URLSearchParams();
+  if (availableOnly) params.set('available', 'true');
+  if (checkIn) params.set('check_in', checkIn);
+  if (checkOut) params.set('check_out', checkOut);
+  const query = params.toString() ? `?${params.toString()}` : '';
   const list = await apiRequest(`/rooms${query}`);
   return list.map(mapRoomFromApi);
 }
@@ -83,4 +105,26 @@ export async function updateRoom(token, id, body) {
     }),
   });
   return mapRoomFromApi(r);
+}
+
+export async function fetchRoomReviews(id) {
+  const list = await apiRequest(`/rooms/${id}/reviews`);
+  return Array.isArray(list) ? list.map((r) => ({
+    id: String(r.id),
+    userId: String(r.user_id || r.userId || ''),
+    bookingId: String(r.booking_id || r.bookingId || ''),
+    rating: Number(r.rating || 0),
+    comment: r.comment || '',
+    createdAt: r.created_at || r.createdAt,
+    userName: r.user_name || r.userName || '',
+  })) : [];
+}
+
+export async function submitRoomReview(token, roomId, { bookingId, rating, comment }) {
+  const payload = { booking_id: bookingId, rating, comment };
+  const r = await apiRequestWithAuth(`/rooms/${roomId}/reviews`, token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return r;
 }

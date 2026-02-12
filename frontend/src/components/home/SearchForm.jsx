@@ -6,18 +6,25 @@ export default function SearchForm() {
   const navigate = useNavigate();
   const { searchParams, submitSearch } = useBooking();
   const [location, setLocation] = useState(searchParams.location || '');
+  const [roomType, setRoomType] = useState(searchParams.roomType || '');
   const [checkIn, setCheckIn] = useState(searchParams.checkIn || '');
   const [checkOut, setCheckOut] = useState(searchParams.checkOut || '');
-  const [guests, setGuests] = useState(searchParams.guests || 1);
+  const [guests, setGuests] = useState(String(searchParams.guests || 1));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    submitSearch({ location, checkIn, checkOut, guests });
+    const guestsNum = Number(guests) || 0;
+    if (guestsNum < 1) {
+      alert('Please enter at least 1 guest');
+      return;
+    }
+    submitSearch({ location, roomType, checkIn, checkOut, guests: guestsNum });
     const params = new URLSearchParams();
     if (location) params.set('location', location);
+    if (roomType) params.set('roomType', roomType);
     if (checkIn) params.set('checkIn', checkIn);
     if (checkOut) params.set('checkOut', checkOut);
-    if (guests) params.set('guests', guests);
+    if (guestsNum) params.set('guests', guestsNum);
     navigate(`/rooms?${params.toString()}`);
   };
 
@@ -28,15 +35,15 @@ export default function SearchForm() {
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end lg:gap-5">
         <div className="min-w-0 lg:col-span-2">
-          <label htmlFor="location" className="mb-1 block text-sm font-medium text-foreground">
-            Location
+          <label htmlFor="roomType" className="mb-1 block text-sm font-medium text-foreground">
+            Room
           </label>
           <input
-            id="location"
+            id="roomType"
             type="text"
-            placeholder="City or hotel name"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Search room type or name"
+            value={roomType}
+            onChange={(e) => setRoomType(e.target.value)}
             className="h-11 min-w-0 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -50,7 +57,7 @@ export default function SearchForm() {
             value={checkIn}
             onChange={(e) => setCheckIn(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-11 w-full min-w-0 rounded-lg border border-border bg-background pl-4 pr-12 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
         <div className="min-w-0">
@@ -63,28 +70,26 @@ export default function SearchForm() {
             value={checkOut}
             onChange={(e) => setCheckOut(e.target.value)}
             min={checkIn || new Date().toISOString().split('T')[0]}
-            className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-11 w-full min-w-0 rounded-lg border border-border bg-background pl-4 pr-6 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 lg:col-span-1.5">
           <label htmlFor="guests" className="mb-1 block text-sm font-medium text-foreground">
             Guests
           </label>
-          <select
+          <input
             id="guests"
+            type="text"
+            placeholder="Minimum of 1"
             value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className="h-11 min-w-0 w-full rounded-lg border border-border bg-background pl-4 pr-10 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>
-            ))}
-          </select>
+            onChange={(e) => setGuests(e.target.value)}
+            className="h-11 min-w-0 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
         </div>
-        <div className="flex items-end lg:pb-0.5">
+        <div className="flex items-end lg:col-span-1.5 lg:pb-0.5">
           <button
             type="submit"
-            className="h-11 w-full whitespace-nowrap rounded-lg bg-primary px-6 py-2.5 font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:w-auto lg:w-full lg:min-w-0"
+            className="flex h-11 w-full items-center justify-center whitespace-nowrap rounded-lg bg-primary px-6 py-2.5 text-center font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Search Rooms
           </button>

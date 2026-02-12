@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ export default function SignUpPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [age, setAge] = useState('');
+  const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [gender, setGender] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +30,10 @@ export default function SignUpPage() {
       setError('Passwords do not match.');
       return;
     }
+    if (phone && phone.replace(/\D/g, '').length !== 11) {
+      setError('Phone number must be exactly 11 digits.');
+      return;
+    }
     setLoading(true);
     try {
       const result = await signup({
@@ -36,6 +42,7 @@ export default function SignUpPage() {
         email,
         password,
         age: age || undefined,
+        phone: phone || undefined,
         address: address || undefined,
         gender: gender || undefined,
       });
@@ -49,125 +56,77 @@ export default function SignUpPage() {
     }
   };
 
+  const inputClass = 'mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+  const labelClass = 'block text-sm font-medium text-foreground';
+
   return (
-    <div className="mx-auto max-w-md px-4 py-12">
+    <div className="mx-auto max-w-2xl px-4 py-12">
       <div className="rounded-2xl border border-border bg-background p-8 shadow-lg">
-        <h1 className="text-2xl font-bold text-foreground">Create account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign up to book rooms and manage your reservations</p>
+        <div className="mb-6 flex justify-center">
+          <img src="/AtEase.svg" alt="AtEase" className="h-24 w-24 shrink-0 object-contain" aria-hidden />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground text-center">Create account</h1>
+        <p className="mt-1 text-sm text-muted-foreground text-center">Sign up to book rooms and manage your reservations</p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {error && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
               {error}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
+          {/* 1. Identity */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-foreground">First name</label>
-              <input
-                id="firstName"
-                type="text"
-                autoComplete="given-name"
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Jane"
-              />
+              <label htmlFor="firstName" className={labelClass}>First name</label>
+              <input id="firstName" type="text" autoComplete="given-name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} placeholder="First Name" />
             </div>
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-foreground">Last name</label>
-              <input
-                id="lastName"
-                type="text"
-                autoComplete="family-name"
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Doe"
-              />
+              <label htmlFor="lastName" className={labelClass}>Last name</label>
+              <input id="lastName" type="text" autoComplete="family-name" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} placeholder="Last Name" />
             </div>
           </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">Email</label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="you@example.com"
-            />
+          {/* 2. Contact */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="email" className={labelClass}>Email</label>
+              <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="you@example.com" />
+            </div>
+            <div>
+              <label htmlFor="phone" className={labelClass}>Phone number</label>
+              <input id="phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))} className={inputClass} placeholder="09XXXXXXXXX" />
+            </div>
           </div>
-          <div>
-            <label htmlFor="age" className="block text-sm font-medium text-foreground">Age</label>
-            <input
-              id="age"
-              type="number"
-              min={1}
-              max={120}
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="e.g. 25"
-            />
+          {/* 3. Profile */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="age" className={labelClass}>Age</label>
+              <input id="age" type="number" min={18} max={120} value={age} onChange={(e) => setAge(e.target.value)} className={inputClass} placeholder="18+ and above" />
+            </div>
+            <div>
+              <label htmlFor="gender" className={labelClass}>Gender</label>
+              <select id="gender" value={gender} onChange={(e) => setGender(e.target.value)} className={`${inputClass} pr-12`}>
+                <option value="">Select gender</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
           </div>
+          {/* 4. Address */}
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-foreground">Address</label>
-            <input
-              id="address"
-              type="text"
-              autoComplete="street-address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Street, city, country"
-            />
+            <label htmlFor="address" className={labelClass}>Address</label>
+            <input id="address" type="text" autoComplete="street-address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} placeholder="Street, city, country" />
           </div>
-          <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-foreground">Gender</label>
-            <select
-              id="gender"
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border pl-4 pr-12 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Select gender</option>
-              <option value="Female">Female</option>
-              <option value="Male">Male</option>
-              <option value="Non-binary">Non-binary</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-foreground">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Min 8 chars, 1 upper, 1 lower, 1 number, 1 symbol"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">At least 8 characters, one uppercase, one lowercase, one number, and one symbol (e.g. !@#)</p>
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">Confirm password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-border px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="••••••••"
-            />
+          {/* 5. Password */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="password" className={labelClass}>Password</label>
+              <PasswordInput id="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+              <p className="mt-1 text-xs text-muted-foreground">8+ chars, uppercase, lowercase, number, symbol</p>
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className={labelClass}>Confirm password</label>
+              <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+            </div>
           </div>
           <button
             type="submit"
